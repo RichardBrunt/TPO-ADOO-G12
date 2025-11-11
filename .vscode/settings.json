@@ -1,0 +1,12 @@
+{
+  // Hace que VS Code Java tome 'src/main/java' como raíz del paquete,
+  // evitando el prefijo erróneo "main.java." en los packages.
+  "java.project.sourcePaths": [
+    "src/main/java",
+    "src/tests"
+  ],
+  // Carpeta de salida para .class cuando compilas desde el editor
+  "java.project.outputPath": "out",
+  // Actualiza configuración del proyecto automáticamente
+  "java.configuration.updateBuildConfiguration": "automatic"
+}
