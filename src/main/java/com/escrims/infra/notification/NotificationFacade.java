@@ -1,13 +1,14 @@
 package com.escrims.infra.notification;
 
 import com.escrims.model.domain.notification.NotificationService;
+import com.escrims.model.domain.model.Usuario;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * PatrÃ³n Facade: Simplifica el envÃ­o de notificaciones a travÃ©s de mÃºltiples canales.
- * Coordina email, push y SMS desde una Ãºnica interfaz.
+ * Patrón Facade: Simplifica el envío de notificaciones a través de múltiples canales.
+ * Coordina email, push y SMS desde una única interfaz.
  */
 public class NotificationFacade {
     private final List<NotificationService> services;
@@ -17,69 +18,68 @@ public class NotificationFacade {
     }
     
     /**
-     * Registra un servicio de notificaciÃ³n.
+     * Registra un servicio de notificación.
      */
     public void registrarServicio(NotificationService service) {
         services.add(service);
     }
     
     /**
-     * EnvÃ­a notificaciÃ³n a travÃ©s de todos los canales registrados.
+     * Envía notificación a través de todos los canales registrados.
      */
-    public void notificarATodos(String destinatario, String asunto, String mensaje) {
+    public void notificarATodos(Usuario destinatario, String asunto, String mensaje) {
         for (NotificationService service : services) {
             try {
-                service.enviar(destinatario, asunto, mensaje);
+                service.enviarEmail(destinatario, asunto, mensaje);
             } catch (Exception e) {
-                System.err.println("Error al enviar notificaciÃ³n por " + service.getTipo() + ": " + e.getMessage());
+                System.err.println("Error al enviar notificación: " + e.getMessage());
             }
         }
     }
     
     /**
-     * EnvÃ­a notificaciÃ³n solo por email.
+     * Envía notificación solo por email.
      */
-    public void notificarPorEmail(String destinatario, String asunto, String mensaje) {
-        notificarPorTipo("EMAIL", destinatario, asunto, mensaje);
+    public void notificarPorEmail(Usuario destinatario, String asunto, String mensaje) {
+        for (NotificationService service : services) {
+            service.enviarEmail(destinatario, asunto, mensaje);
+            return;
+        }
     }
     
     /**
-     * EnvÃ­a notificaciÃ³n solo por push.
+     * Envía notificación solo por push.
      */
-    public void notificarPorPush(String destinatario, String asunto, String mensaje) {
-        notificarPorTipo("PUSH", destinatario, asunto, mensaje);
+    public void notificarPorPush(Usuario destinatario, String titulo, String mensaje) {
+        for (NotificationService service : services) {
+            service.enviarNotificacionPush(destinatario, titulo, mensaje);
+            return;
+        }
     }
     
     /**
-     * EnvÃ­a notificaciÃ³n solo por SMS.
+     * Envía notificación solo por SMS.
      */
-    public void notificarPorSMS(String destinatario, String asunto, String mensaje) {
-        notificarPorTipo("SMS", destinatario, asunto, mensaje);
+    public void notificarPorSMS(Usuario destinatario, String mensaje) {
+        for (NotificationService service : services) {
+            service.enviarNotificacion(destinatario, mensaje);
+            return;
+        }
     }
     
     /**
      * Envia notificacion critica (todos los canales disponibles).
      */
-    public void notificarCritico(String destinatario, String asunto, String mensaje) {
+    public void notificarCritico(Usuario destinatario, String asunto, String mensaje) {
         System.out.println("\n*** NOTIFICACION CRITICA ***");
         notificarATodos(destinatario, asunto, mensaje);
         System.out.println("*** FIN NOTIFICACION CRITICA ***\n");
     }
     
-    private void notificarPorTipo(String tipo, String destinatario, String asunto, String mensaje) {
-        for (NotificationService service : services) {
-            if (service.getTipo().equals(tipo)) {
-                service.enviar(destinatario, asunto, mensaje);
-                return;
-            }
-        }
-        System.err.println("No hay servicio de notificaciÃ³n configurado para tipo: " + tipo);
-    }
-    
     /**
-     * Retorna la cantidad de canales de notificaciÃ³n disponibles.
+     * Retorna la cantidad de canales de notificación disponibles.
      */
-    public int cantidadCanales() {
+    public int getCantidadCanales() {
         return services.size();
     }
 }

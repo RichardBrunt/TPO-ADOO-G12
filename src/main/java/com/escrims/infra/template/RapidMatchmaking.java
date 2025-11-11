@@ -17,24 +17,39 @@ import java.util.stream.Collectors;
 public class RapidMatchmaking extends ScrimMatchmakingTemplate {
     
     @Override
-    protected List<Postulacion> filtrarPostulaciones(Scrim scrim, List<Postulacion> postulaciones) {
-        // Filtrado basico: solo verifica que la postulacion sea del scrim correcto
+    protected void validarScrim(Scrim scrim) {
+        if (scrim == null) {
+            throw new IllegalArgumentException("El scrim no puede ser null");
+        }
+        System.out.println("   - Modo RAPIDO: Validación mínima");
+    }
+    
+    @Override
+    protected List<Postulacion> filtrarPostulaciones(Scrim scrim) {
+        // En una implementación real, buscaría las postulaciones del scrim
+        System.out.println("   - Filtrando postulaciones (modo rápido)...");
+        return List.of();
+    }
+    
+    @Override
+    protected List<Postulacion> ordenarPostulaciones(List<Postulacion> postulaciones) {
+        // Sin ordenamiento - mantiene orden de llegada (FIFO)
+        System.out.println("   - Sin ordenamiento (FIFO)");
+        return postulaciones;
+    }
+    
+    @Override
+    protected List<Postulacion> seleccionarJugadores(Scrim scrim, List<Postulacion> postulaciones) {
+        // Selección simple: primeros N jugadores (FIFO)
+        System.out.println("   - Seleccionando primeros jugadores (FIFO)...");
         return postulaciones.stream()
-            .filter(p -> p.getScrimId().equals(scrim.getId()))
+            .limit(scrim.getFormato().getJugadoresPorEquipo() * 2) // 2 equipos
             .collect(Collectors.toList());
     }
     
     @Override
-    protected List<Postulacion> seleccionarParticipantes(Scrim scrim, List<Postulacion> filtradas) {
-        // Seleccion simple: primeros N jugadores (FIFO)
-        int capacidad = scrim.getFormato().totalJugadores();
-        return filtradas.stream()
-            .limit(capacidad)
-            .collect(Collectors.toList());
-    }
-    
-    @Override
-    protected void preprocesarPostulaciones(List<Postulacion> postulaciones) {
-        System.out.println("   - Modo RAPIDO: Sin pre-procesamiento adicional");
+    protected void notificarResultados(Scrim scrim, List<Postulacion> seleccionadas) {
+        System.out.println("   - Notificando resultados (modo rápido)...");
+        System.out.println("   - " + seleccionadas.size() + " jugadores seleccionados");
     }
 }

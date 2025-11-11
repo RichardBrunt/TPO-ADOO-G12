@@ -69,8 +69,8 @@ public class ApplicationModel {
         return scrimService.listarScrimsPorJuego(juego);
     }
 
-    public void crearScrim(ScrimFormData formData) {
-        scrimService.crearScrim(
+    public Scrim crearScrim(ScrimFormData formData) {
+        Scrim scrim = scrimService.crearScrim(
             formData.getTitulo(),
             formData.getDescripcion(),
             formData.getJuego(),
@@ -81,12 +81,134 @@ public class ApplicationModel {
             formData.getFechaHora(),
             usuarioActual
         );
+        
+        // Asignar la estrategia de selección al scrim
+        if (scrim != null && formData.getEstrategiaSeleccion() != null) {
+            scrim.setEstrategiaSeleccion(formData.getEstrategiaSeleccion());
+            System.out.println("[MODEL] Estrategia asignada al scrim: " + formData.getEstrategiaSeleccion().getNombre());
+        }
+        
+        // Agregar automáticamente al creador como participante del scrim
+        if (scrim != null && usuarioActual != null) {
+            scrim.agregarParticipante(usuarioActual);
+            System.out.println("[AUTO-JOIN] Usuario '" + usuarioActual.getUsername() + "' agregado automáticamente al scrim " + scrim.getId());
+        }
+        
         notifyListeners();
+        return scrim;
     }
 
     public void postularseAScrim(Scrim scrim, Rol rol, String mensaje) {
         scrimService.postularseAScrim(scrim, usuarioActual, rol, mensaje);
         notifyListeners();
+    }
+
+    // Métodos requeridos por ScrimController
+    public boolean login(String username, String password) {
+        // Implementación simplificada - en producción validar contra repositorio
+        Usuario usuario = new Usuario(username, password, username + "@example.com");
+        // Agregar estadísticas básicas
+        usuario.agregarEstadistica(new Estadistica(Juego.LOL, 1500, 0, 0.0, 50));
+        setUsuarioActual(usuario);
+        return true;
+    }
+
+    public void logout() {
+        setUsuarioActual(null);
+    }
+
+    public void crearUsuario(String username, String email, String password, 
+                            Region region, int mmr, int latencia, java.util.Set<Rol> roles) {
+        Usuario nuevoUsuario = new Usuario(username, password, email);
+        // Agregar estadística con los datos proporcionados
+        nuevoUsuario.agregarEstadistica(new Estadistica(Juego.LOL, mmr, 0, 0.0, latencia));
+        setUsuarioActual(nuevoUsuario);
+    }
+
+    public List<Scrim> buscarScrimsDisponibles() {
+        return scrimService.listarScrimsDisponibles();
+    }
+
+    public List<Scrim> obtenerTodosScrims() {
+        return scrimService.listarTodosScrims();
+    }
+
+    public Postulacion postularseAScrim(java.util.UUID scrimId, Rol rolDeseado) {
+        // Buscar scrim por ID - necesitamos convertir UUID a Long o buscar de otra forma
+        List<Scrim> scrims = scrimService.listarTodosScrims();
+        Scrim scrim = scrims.stream()
+            .filter(s -> s.getId() != null && s.getId().toString().equals(scrimId.toString()))
+            .findFirst()
+            .orElse(null);
+            
+        if (scrim != null) {
+            Postulacion postulacion = scrimService.postularseAScrim(scrim, usuarioActual, rolDeseado, "");
+            notifyListeners();
+            return postulacion;
+        }
+        return null;
+    }
+
+    public List<Postulacion> obtenerPostulacionesDeScrim(java.util.UUID scrimId) {
+        List<Scrim> scrims = scrimService.listarTodosScrims();
+        Scrim scrim = scrims.stream()
+            .filter(s -> s.getId() != null && s.getId().toString().equals(scrimId.toString()))
+            .findFirst()
+            .orElse(null);
+            
+        if (scrim != null) {
+            return new ArrayList<>(scrim.getPostulaciones());
+        }
+        return new ArrayList<>();
+    }
+
+    public List<Postulacion> obtenerMisPostulaciones() {
+        if (usuarioActual == null) {
+            return new ArrayList<>();
+        }
+        // Buscar en todos los scrims las postulaciones del usuario actual
+        List<Postulacion> misPostulaciones = new ArrayList<>();
+        for (Scrim scrim : scrimService.listarTodosScrims()) {
+            for (Postulacion p : scrim.getPostulaciones()) {
+                if (p.getUsuario().equals(usuarioActual)) {
+                    misPostulaciones.add(p);
+                }
+            }
+        }
+        return misPostulaciones;
+    }
+
+    public void aceptarPostulacion(java.util.UUID postulacionId) {
+        // Buscar la postulación en todos los scrims
+        for (Scrim scrim : scrimService.listarTodosScrims()) {
+            for (Postulacion p : scrim.getPostulaciones()) {
+                if (p.getId() != null && p.getId().toString().equals(postulacionId.toString())) {
+                    scrimService.aceptarPostulacion(p);
+                    notifyListeners();
+                    return;
+                }
+            }
+        }
+    }
+
+    public void rechazarPostulacion(java.util.UUID postulacionId) {
+        // Buscar la postulación en todos los scrims y eliminarla
+        for (Scrim scrim : scrimService.listarTodosScrims()) {
+            for (Postulacion p : scrim.getPostulaciones()) {
+                if (p.getId() != null && p.getId().toString().equals(postulacionId.toString())) {
+                    scrim.getPostulaciones().remove(p);
+                    notifyListeners();
+                    return;
+                }
+            }
+        }
+    }
+
+    public java.util.Map<String, Integer> obtenerEstadisticas() {
+        java.util.Map<String, Integer> stats = new java.util.HashMap<>();
+        stats.put("totalScrims", scrimService.listarTodosScrims().size());
+        stats.put("scrimsDisponibles", scrimService.listarScrimsDisponibles().size());
+        return stats;
     }
 
     public static class ScrimFormData {
@@ -98,6 +220,7 @@ public class ApplicationModel {
         private int mmrMinimo;
         private int mmrMaximo;
         private java.time.LocalDateTime fechaHora;
+        private com.escrims.model.domain.strategy.SelectionStrategy estrategiaSeleccion;
 
         public String getTitulo() { return titulo; }
         public void setTitulo(String titulo) { this.titulo = titulo; }
@@ -122,5 +245,10 @@ public class ApplicationModel {
 
         public java.time.LocalDateTime getFechaHora() { return fechaHora; }
         public void setFechaHora(java.time.LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+        
+        public com.escrims.model.domain.strategy.SelectionStrategy getEstrategiaSeleccion() { return estrategiaSeleccion; }
+        public void setEstrategiaSeleccion(com.escrims.model.domain.strategy.SelectionStrategy estrategiaSeleccion) { 
+            this.estrategiaSeleccion = estrategiaSeleccion; 
+        }
     }
 }

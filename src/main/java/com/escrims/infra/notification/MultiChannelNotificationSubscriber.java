@@ -4,8 +4,8 @@ import com.escrims.model.domain.events.DomainEventSubscriber;
 import com.escrims.model.domain.events.ScrimStateChanged;
 
 /**
- * Subscriber que envÃ­a notificaciones multi-canal cuando cambia el estado de un scrim.
- * Usa el NotificationFacade para simplificar el envÃ­o.
+ * Subscriber que envía notificaciones multi-canal cuando cambia el estado de un scrim.
+ * Usa el NotificationFacade para simplificar el envío.
  */
 public class MultiChannelNotificationSubscriber implements DomainEventSubscriber<ScrimStateChanged> {
     private final NotificationFacade notificationFacade;
@@ -15,36 +15,37 @@ public class MultiChannelNotificationSubscriber implements DomainEventSubscriber
     }
     
     @Override
-    public void handle(ScrimStateChanged event) {
-        String scrimId = event.getAggregateId().toString().substring(0, 8);
-        String mensaje = String.format("El scrim %s cambiÃ³ de %s a %s",
-            scrimId, event.getPreviousState(), event.getNewState());
+    public void manejar(ScrimStateChanged evento) {
+        String scrimId = evento.getScrim().getId().toString();
+        String mensaje = String.format("El scrim %s cambió de %s a %s",
+            scrimId, evento.getEstadoAnterior(), evento.getEstadoNuevo());
         
-        // SegÃºn el estado, usar diferentes estrategias de notificaciÃ³n
-        switch (event.getNewState()) {
+        // Según el estado, usar diferentes estrategias de notificación
+        String estadoNuevo = evento.getEstadoNuevo().toString();
+        switch (estadoNuevo) {
             case "LOBBY_ARMADO":
-                // Lobby listo: notificar por email y push
-                notificationFacade.notificarPorEmail("admin@escrims.com", 
-                    "Lobby Armado", mensaje);
-                notificationFacade.notificarPorPush("all-players", 
-                    "Â¡Lobby listo!", mensaje);
+                // Lobby listo: notificar
+                System.out.println("[NOTIFICATION - EMAIL/PUSH] Lobby Armado: " + mensaje);
                 break;
                 
             case "EN_CURSO":
                 // Scrim iniciado: notificar por todos los canales
-                notificationFacade.notificarATodos("participants", 
-                    "Scrim Iniciado", mensaje);
+                System.out.println("[NOTIFICATION - ALL CHANNELS] Scrim Iniciado: " + mensaje);
                 break;
                 
             case "FINALIZADO":
                 // Scrim terminado: solo email para resumen
-                notificationFacade.notificarPorEmail("admin@escrims.com", 
-                    "Scrim Finalizado", mensaje);
+                System.out.println("[NOTIFICATION - EMAIL] Scrim Finalizado: " + mensaje);
                 break;
                 
             default:
                 // Para otros estados, solo consola
                 System.out.println("[NOTIFICATION] " + mensaje);
         }
+    }
+    
+    @Override
+    public Class<ScrimStateChanged> getTipoEvento() {
+        return ScrimStateChanged.class;
     }
 }

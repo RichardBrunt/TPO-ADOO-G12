@@ -1,43 +1,24 @@
 package com.escrims.infra.adapter;
 
 import com.escrims.model.domain.adapter.PlayerStatsProvider;
-import com.escrims.infra.external.RiotGamesAPI;
-import com.escrims.infra.external.RiotGamesAPI.RiotPlayerData;
+import com.escrims.model.domain.model.Estadistica;
+import com.escrims.model.domain.model.Juego;
 
 /**
  * Patron Adapter: Adapta la API de Riot Games a nuestra interfaz PlayerStatsProvider.
- * Convierte las llamadas de nuestra interfaz a las llamadas especificas de Riot API.
+ * Simula la integración con Riot API (Valorant/LoL).
  */
 public class RiotAPIAdapter implements PlayerStatsProvider {
     
-    private final RiotGamesAPI riotAPI;
-    
-    public RiotAPIAdapter() {
-        this.riotAPI = new RiotGamesAPI();
-    }
-    
     @Override
-    public int getPlayerRanking(String playerId) {
-        RiotPlayerData data = riotAPI.fetchPlayerData(playerId);
-        // Adaptacion: Riot usa "elo", nosotros usamos "ranking/MMR"
-        return data.getElo();
-    }
-    
-    @Override
-    public int getPlayerLatency(String playerId) {
-        RiotPlayerData data = riotAPI.fetchPlayerData(playerId);
-        // Adaptacion: Riot usa "ping", nosotros usamos "latency"
-        return data.getPing();
-    }
-    
-    @Override
-    public String getProviderName() {
-        return "Riot Games API Adapter (Valorant/LoL)";
-    }
-    
-    @Override
-    public boolean playerExists(String playerId) {
-        // Adaptacion: usamos el metodo de validacion de Riot
-        return riotAPI.isValidRiotAccount(playerId);
+    public Estadistica obtenerEstadisticas(String username, Juego juego) {
+        // Simulación de llamada a Riot API
+        // En producción, aquí iría la llamada real a la API de Riot Games
+        int mmr = (int) (Math.random() * 2000) + 1000; // MMR entre 1000-3000
+        int partidasJugadas = (int) (Math.random() * 100) + 50;
+        double winRate = 40 + (Math.random() * 20); // 40-60%
+        int latencia = (int) (Math.random() * 50) + 20; // 20-70ms
+        
+        return new Estadistica(juego, mmr, partidasJugadas, winRate, latencia);
     }
 }

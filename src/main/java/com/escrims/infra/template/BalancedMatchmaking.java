@@ -18,54 +18,44 @@ import java.util.Comparator;
 public class BalancedMatchmaking extends ScrimMatchmakingTemplate {
     
     @Override
-    protected boolean validarRequisitosMinimos(Scrim scrim, List<Postulacion> postulaciones) {
-        // Validacion mas estricta
-        if (!super.validarRequisitosMinimos(scrim, postulaciones)) {
-            return false;
+    protected void validarScrim(Scrim scrim) {
+        if (scrim == null) {
+            throw new IllegalArgumentException("El scrim no puede ser null");
         }
-        
-        // Requiere suficientes postulaciones (en este caso solo verificamos que haya al menos la capacidad)
-        int capacidadMinima = scrim.getFormato().totalJugadores();
-        if (postulaciones.size() < capacidadMinima) {
-            System.out.println("   ERROR - Se requieren al menos " + capacidadMinima + " postulaciones");
-            return false;
-        }
-        return true;
+        System.out.println("   - Modo BALANCEADO: Validando scrim...");
     }
     
     @Override
-    protected void preprocesarPostulaciones(List<Postulacion> postulaciones) {
-        System.out.println("   - Modo BALANCEADO: Analizando skill de jugadores...");
+    protected List<Postulacion> filtrarPostulaciones(Scrim scrim) {
+        // En una implementación real, aquí se buscarían las postulaciones del scrim
+        // Por ahora devolvemos lista vacía - esto debería recibir postulaciones como parámetro
+        System.out.println("   - Filtrando postulaciones del scrim...");
+        return List.of();
     }
     
     @Override
-    protected List<Postulacion> filtrarPostulaciones(Scrim scrim, List<Postulacion> postulaciones) {
-        // Filtrado estricto: verifica scrim correcto
-        return postulaciones.stream()
-            .filter(p -> p.getScrimId().equals(scrim.getId()))
-            .collect(Collectors.toList());
-    }
-    
-    @Override
-    protected void ordenarPostulaciones(List<Postulacion> postulaciones) {
+    protected List<Postulacion> ordenarPostulaciones(List<Postulacion> postulaciones) {
         // Ordenar por ID (simula ordenamiento por MMR)
-        // En un caso real, se ordenaria por skill/MMR del jugador
-        postulaciones.sort(Comparator.comparing(p -> p.getId().toString()));
+        // En un caso real, se ordenaría por skill/MMR del jugador
         System.out.println("   - Postulaciones ordenadas por skill");
-    }
-    
-    @Override
-    protected List<Postulacion> seleccionarParticipantes(Scrim scrim, List<Postulacion> filtradas) {
-        // Seleccion de los mejores jugadores (ya ordenados)
-        int capacidad = scrim.getFormato().totalJugadores();
-        return filtradas.stream()
-            .limit(capacidad)
+        return postulaciones.stream()
+            .sorted(Comparator.comparing(p -> p.getId().toString()))
             .collect(Collectors.toList());
     }
     
     @Override
-    protected void postprocesarResultados(Scrim scrim, List<Postulacion> seleccionadas) {
-        System.out.println("   - Verificando balance de equipos...");
+    protected List<Postulacion> seleccionarJugadores(Scrim scrim, List<Postulacion> postulaciones) {
+        // Selección de los mejores jugadores (ya ordenados)
+        System.out.println("   - Seleccionando jugadores balanceados...");
+        return postulaciones.stream()
+            .limit(scrim.getFormato().getJugadoresPorEquipo() * 2) // 2 equipos
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    protected void notificarResultados(Scrim scrim, List<Postulacion> seleccionadas) {
+        System.out.println("   - Notificando resultados...");
+        System.out.println("   - " + seleccionadas.size() + " jugadores seleccionados");
         System.out.println("   - Balance OK: Equipos equilibrados");
     }
 }

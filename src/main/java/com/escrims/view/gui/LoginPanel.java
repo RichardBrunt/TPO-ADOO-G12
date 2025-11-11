@@ -39,8 +39,8 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
-        // TÃ­tulo
-        JLabel titleLabel = new JLabel("eScrims - Sistema de GestiÃ³n de Scrims");
+        // Título
+        JLabel titleLabel = new JLabel("eScrims - Sistema de Gestión de Scrims");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0;
@@ -48,8 +48,8 @@ public class LoginPanel extends JPanel {
         gbc.gridwidth = 2;
         centerPanel.add(titleLabel, gbc);
         
-        // SubtÃ­tulo
-        JLabel subtitleLabel = new JLabel("Iniciar SesiÃ³n");
+        // Subtítulo
+        JLabel subtitleLabel = new JLabel("Iniciar Sesión");
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 1;
@@ -64,20 +64,20 @@ public class LoginPanel extends JPanel {
         usernameField = new JTextField(20);
         centerPanel.add(usernameField, gbc);
         
-        // ContraseÃ±a
+        // Contraseña
         gbc.gridx = 0;
         gbc.gridy = 3;
-        centerPanel.add(new JLabel("ContraseÃ±a:"), gbc);
+        centerPanel.add(new JLabel("Contraseña:"), gbc);
         
         gbc.gridx = 1;
         passwordField = new JPasswordField(20);
         centerPanel.add(passwordField, gbc);
         
-        // BotÃ³n Login
+        // Botón Login
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
-        loginButton = new JButton("Iniciar SesiÃ³n");
+        loginButton = new JButton("Iniciar Sesión");
         loginButton.setFont(new Font("Arial", Font.BOLD, 14));
         loginButton.setBackground(new Color(76, 175, 80));
         loginButton.setForeground(Color.WHITE);
@@ -85,9 +85,9 @@ public class LoginPanel extends JPanel {
         loginButton.addActionListener(e -> handleLogin());
         centerPanel.add(loginButton, gbc);
         
-        // BotÃ³n Registrarse
+        // Botón Registrarse
         gbc.gridy = 5;
-        showRegisterButton = new JButton("Â¿No tienes cuenta? RegÃ­strate");
+        showRegisterButton = new JButton("¿No tienes cuenta? Regístrate");
         showRegisterButton.setFont(new Font("Arial", Font.PLAIN, 12));
         showRegisterButton.setBorderPainted(false);
         showRegisterButton.setFocusPainted(false);
@@ -96,9 +96,9 @@ public class LoginPanel extends JPanel {
         showRegisterButton.addActionListener(e -> showRegisterDialog());
         centerPanel.add(showRegisterButton, gbc);
         
-        // Mensaje de demostraciÃ³n
+        // Mensaje de demostración
         gbc.gridy = 6;
-        JLabel demoLabel = new JLabel("Demo: Usa 'admin' / 'admin' o regÃ­strate");
+        JLabel demoLabel = new JLabel("Demo: Usa 'admin' / 'admin' o regístrate");
         demoLabel.setFont(new Font("Arial", Font.ITALIC, 11));
         demoLabel.setForeground(Color.GRAY);
         centerPanel.add(demoLabel, gbc);
@@ -115,7 +115,7 @@ public class LoginPanel extends JPanel {
         
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                "Por favor ingrese usuario y contraseÃ±a",
+                "Por favor ingrese usuario y contraseña",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -125,10 +125,10 @@ public class LoginPanel extends JPanel {
         
         if (success) {
             JOptionPane.showMessageDialog(this,
-                "Â¡Bienvenido " + username + "!",
+                "¡Bienvenido " + username + "!",
                 "Login Exitoso",
                 JOptionPane.INFORMATION_MESSAGE);
-            // El cambio de pantalla se maneja automÃ¡ticamente por el listener
+            // El cambio de pantalla se maneja automáticamente por el listener
         } else {
             JOptionPane.showMessageDialog(this,
                 "Usuario o contraseÃ±a incorrectos",
@@ -159,7 +159,7 @@ public class LoginPanel extends JPanel {
         // Checkboxes para roles
         JCheckBox duelistCheck = new JCheckBox("Duelist");
         JCheckBox supportCheck = new JCheckBox("Support");
-        JCheckBox flexCheck = new JCheckBox("Flex");
+        JCheckBox controllerCheck = new JCheckBox("Controller");
         
         // Layout
         int row = 0;
@@ -174,12 +174,12 @@ public class LoginPanel extends JPanel {
         panel.add(regEmail, gbc);
         
         gbc.gridx = 0; gbc.gridy = row++;
-        panel.add(new JLabel("ContraseÃ±a:"), gbc);
+        panel.add(new JLabel("Contraseña:"), gbc);
         gbc.gridx = 1;
         panel.add(regPassword, gbc);
         
         gbc.gridx = 0; gbc.gridy = row++;
-        panel.add(new JLabel("RegiÃ³n:"), gbc);
+        panel.add(new JLabel("Región:"), gbc);
         gbc.gridx = 1;
         panel.add(regionCombo, gbc);
         
@@ -202,16 +202,16 @@ public class LoginPanel extends JPanel {
         gbc.gridy = row++;
         panel.add(supportCheck, gbc);
         gbc.gridy = row++;
-        panel.add(flexCheck, gbc);
+        panel.add(controllerCheck, gbc);
         
-        // BotÃ³n Registrar
+        // Botón Registrar
         gbc.gridy = row++;
         JButton registerButton = new JButton("Registrarse");
         registerButton.addActionListener(e -> {
             Set<Rol> roles = new HashSet<>();
             if (duelistCheck.isSelected()) roles.add(Rol.DUELIST);
             if (supportCheck.isSelected()) roles.add(Rol.SUPPORT);
-            if (flexCheck.isSelected()) roles.add(Rol.FLEX);
+            if (controllerCheck.isSelected()) roles.add(Rol.CONTROLLER);
             
             if (roles.isEmpty()) {
                 JOptionPane.showMessageDialog(registerDialog,
@@ -233,8 +233,8 @@ public class LoginPanel extends JPanel {
             
             if (success) {
                 JOptionPane.showMessageDialog(registerDialog,
-                    "Â¡Registro exitoso! Ahora puede iniciar sesiÃ³n",
-                    "Ã‰xito",
+                    "¡Registro exitoso! Ahora puede iniciar sesión",
+                    "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
                 registerDialog.dispose();
             } else {

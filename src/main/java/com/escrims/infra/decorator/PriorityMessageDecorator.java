@@ -15,14 +15,7 @@ public class PriorityMessageDecorator extends MessageDecorator {
     }
     
     @Override
-    public String getSubject() {
-        return "[" + priority + "] " + super.getSubject();
-    }
-    
-    @Override
-    public String getContent() {
-        return "PRIORIDAD: " + priority + "\n" + 
-               "=".repeat(40) + "\n" + 
-               super.getContent();
+    public String getContenido() {
+        return "[" + priority + "] " + super.getContenido();
     }
 }

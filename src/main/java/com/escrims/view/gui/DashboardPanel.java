@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Panel principal con pestaÃ±as para gestiÃ³n de scrims
+ * Panel principal con pestañas para gestión de scrims
  */
 public class DashboardPanel extends JPanel {
     
@@ -27,6 +27,7 @@ public class DashboardPanel extends JPanel {
     private JComboBox<Juego> juegoCombo;
     private JComboBox<Formato> formatoCombo;
     private JComboBox<Region> regionCombo;
+    private JComboBox<String> estrategiaCombo;
     private JSpinner mmrMinSpinner;
     private JSpinner mmrMaxSpinner;
     private JSpinner latenciaMaxSpinner;
@@ -40,7 +41,7 @@ public class DashboardPanel extends JPanel {
     private JTable postulacionesTable;
     private DefaultTableModel postulacionesTableModel;
     
-    // Tab 4: EstadÃ­sticas
+    // Tab 4: Estadísticas
     private JTextArea statsArea;
     
     public DashboardPanel(ScrimController controller, ApplicationModel model) {
@@ -55,14 +56,33 @@ public class DashboardPanel extends JPanel {
         // Panel superior con info del usuario
         add(createHeaderPanel(), BorderLayout.NORTH);
         
-        // PestaÃ±as
+        // Pestañas
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Crear Scrim", createCrearScrimTab());
         tabbedPane.addTab("Buscar Scrims", createBuscarScrimsTab());
         tabbedPane.addTab("Mis Postulaciones", createPostulacionesTab());
-        tabbedPane.addTab("EstadÃ­sticas", createEstadisticasTab());
+        tabbedPane.addTab("Estadísticas", createEstadisticasTab());
+        
+        // Listener para cargar datos cuando se cambia de pestaña
+        tabbedPane.addChangeListener(e -> {
+            int selectedIndex = tabbedPane.getSelectedIndex();
+            switch (selectedIndex) {
+                case 1: // Buscar Scrims
+                    loadScrims();
+                    break;
+                case 2: // Mis Postulaciones
+                    loadPostulaciones();
+                    break;
+                case 3: // Estadísticas
+                    loadEstadisticas();
+                    break;
+            }
+        });
         
         add(tabbedPane, BorderLayout.CENTER);
+        
+        // Cargar scrims al inicio
+        loadScrims();
     }
     
     private JPanel createHeaderPanel() {
@@ -77,13 +97,13 @@ public class DashboardPanel extends JPanel {
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
         welcomeLabel.setForeground(Color.WHITE);
         
-        JButton logoutButton = new JButton("Cerrar SesiÃ³n");
+        JButton logoutButton = new JButton("Cerrar Sesión");
         logoutButton.setBackground(new Color(244, 67, 54));
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.addActionListener(e -> {
             controller.handleLogout();
-            JOptionPane.showMessageDialog(this, "SesiÃ³n cerrada exitosamente");
+            JOptionPane.showMessageDialog(this, "Sesión cerrada exitosamente");
         });
         
         panel.add(welcomeLabel, BorderLayout.WEST);
@@ -117,47 +137,57 @@ public class DashboardPanel extends JPanel {
         formatoCombo = new JComboBox<>(Formato.values());
         panel.add(formatoCombo, gbc);
         
-        // RegiÃ³n
+        // Región
         row++;
         gbc.gridx = 0; gbc.gridy = row;
-        panel.add(new JLabel("RegiÃ³n:"), gbc);
+        panel.add(new JLabel("Región:"), gbc);
         gbc.gridx = 1;
         regionCombo = new JComboBox<>(Region.values());
         panel.add(regionCombo, gbc);
         
-        // MMR MÃ­nimo
+        // Estrategia de Matchmaking
         row++;
         gbc.gridx = 0; gbc.gridy = row;
-        panel.add(new JLabel("MMR MÃ­nimo:"), gbc);
+        panel.add(new JLabel("Estrategia Matchmaking:"), gbc);
+        gbc.gridx = 1;
+        String[] estrategias = {"Por MMR", "Por Latencia", "Por Historial (FIFO)"};
+        estrategiaCombo = new JComboBox<>(estrategias);
+        estrategiaCombo.setToolTipText("Selecciona cómo se elegirán los jugadores para el scrim");
+        panel.add(estrategiaCombo, gbc);
+        
+        // MMR Mínimo
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(new JLabel("MMR Mínimo:"), gbc);
         gbc.gridx = 1;
         mmrMinSpinner = new JSpinner(new SpinnerNumberModel(1000, 0, 3000, 100));
         panel.add(mmrMinSpinner, gbc);
         
-        // MMR MÃ¡ximo
+        // MMR Máximo
         row++;
         gbc.gridx = 0; gbc.gridy = row;
-        panel.add(new JLabel("MMR MÃ¡ximo:"), gbc);
+        panel.add(new JLabel("MMR Máximo:"), gbc);
         gbc.gridx = 1;
         mmrMaxSpinner = new JSpinner(new SpinnerNumberModel(2000, 0, 3000, 100));
         panel.add(mmrMaxSpinner, gbc);
         
-        // Latencia MÃ¡xima
+        // Latencia Máxima
         row++;
         gbc.gridx = 0; gbc.gridy = row;
-        panel.add(new JLabel("Latencia MÃ¡xima (ms):"), gbc);
+        panel.add(new JLabel("Latencia Máxima (ms):"), gbc);
         gbc.gridx = 1;
         latenciaMaxSpinner = new JSpinner(new SpinnerNumberModel(50, 0, 200, 5));
         panel.add(latenciaMaxSpinner, gbc);
         
-        // DuraciÃ³n
+        // Duración
         row++;
         gbc.gridx = 0; gbc.gridy = row;
-        panel.add(new JLabel("DuraciÃ³n (min):"), gbc);
+        panel.add(new JLabel("Duración (min):"), gbc);
         gbc.gridx = 1;
         duracionSpinner = new JSpinner(new SpinnerNumberModel(60, 30, 180, 15));
         panel.add(duracionSpinner, gbc);
         
-        // BotÃ³n Crear
+        // Botón Crear
         row++;
         gbc.gridx = 0; gbc.gridy = row;
         gbc.gridwidth = 2;
@@ -179,7 +209,7 @@ public class DashboardPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Tabla de scrims
-        String[] columns = {"ID", "Juego", "Formato", "RegiÃ³n", "Estado", "Capacidad", "Fecha"};
+        String[] columns = {"ID", "Juego", "Formato", "Región", "Estado", "Capacidad", "Fecha"};
         scrimsTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -192,19 +222,32 @@ public class DashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(scrimsTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Panel de botones
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Panel de botones con mejor visibilidad
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        buttonPanel.setBackground(Color.WHITE);
         
-        JButton refreshButton = new JButton("Actualizar");
+        JButton refreshButton = new JButton("🔄 Actualizar");
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 13));
+        refreshButton.setBackground(new Color(76, 175, 80));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFocusPainted(false);
+        refreshButton.setPreferredSize(new Dimension(150, 35));
         refreshButton.addActionListener(e -> loadScrims());
         
-        JButton postularseButton = new JButton("Postularse");
+        JButton postularseButton = new JButton("✋ Postularse");
+        postularseButton.setFont(new Font("Arial", Font.BOLD, 13));
         postularseButton.setBackground(new Color(33, 150, 243));
         postularseButton.setForeground(Color.WHITE);
         postularseButton.setFocusPainted(false);
+        postularseButton.setPreferredSize(new Dimension(150, 35));
         postularseButton.addActionListener(e -> handlePostularse());
         
-        JButton verDetallesButton = new JButton("Ver Detalles");
+        JButton verDetallesButton = new JButton("ℹ️ Ver Detalles");
+        verDetallesButton.setFont(new Font("Arial", Font.BOLD, 13));
+        verDetallesButton.setBackground(new Color(255, 152, 0));
+        verDetallesButton.setForeground(Color.WHITE);
+        verDetallesButton.setFocusPainted(false);
+        verDetallesButton.setPreferredSize(new Dimension(150, 35));
         verDetallesButton.addActionListener(e -> handleVerDetalles());
         
         buttonPanel.add(refreshButton);
@@ -233,7 +276,7 @@ public class DashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(postulacionesTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // BotÃ³n actualizar
+        // Botón actualizar
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton refreshButton = new JButton("Actualizar");
         refreshButton.addActionListener(e -> loadPostulaciones());
@@ -255,9 +298,9 @@ public class DashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(statsArea);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // BotÃ³n actualizar
+        // Botón actualizar
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton refreshButton = new JButton("Actualizar EstadÃ­sticas");
+        JButton refreshButton = new JButton("Actualizar Estadísticas");
         refreshButton.addActionListener(e -> loadEstadisticas());
         buttonPanel.add(refreshButton);
         
@@ -267,17 +310,41 @@ public class DashboardPanel extends JPanel {
     }
     
     private void handleCrearScrim() {
+        System.out.println("[DEBUG] handleCrearScrim - Iniciando creación de scrim");
+        
+        // Verificar que el usuario esté logueado
+        Usuario usuarioActual = model.getUsuarioActual();
+        System.out.println("[DEBUG] Usuario actual: " + (usuarioActual != null ? usuarioActual.getUsername() : "NULL"));
+        
+        if (usuarioActual == null) {
+            JOptionPane.showMessageDialog(this,
+                "Debe iniciar sesión para crear un scrim",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         Juego juego = (Juego) juegoCombo.getSelectedItem();
         Formato formato = (Formato) formatoCombo.getSelectedItem();
         Region region = (Region) regionCombo.getSelectedItem();
+        String estrategiaSeleccionada = (String) estrategiaCombo.getSelectedItem();
         int mmrMin = (Integer) mmrMinSpinner.getValue();
         int mmrMax = (Integer) mmrMaxSpinner.getValue();
         int latenciaMax = (Integer) latenciaMaxSpinner.getValue();
         int duracion = (Integer) duracionSpinner.getValue();
         
+        System.out.println("[DEBUG] Datos del scrim:");
+        System.out.println("  Juego: " + juego);
+        System.out.println("  Formato: " + formato);
+        System.out.println("  Region: " + region);
+        System.out.println("  Estrategia: " + estrategiaSeleccionada);
+        System.out.println("  MMR: " + mmrMin + " - " + mmrMax);
+        System.out.println("  Latencia max: " + latenciaMax);
+        System.out.println("  Duración: " + duracion);
+        
         if (mmrMin > mmrMax) {
             JOptionPane.showMessageDialog(this,
-                "El MMR mÃ­nimo debe ser menor o igual al MMR mÃ¡ximo",
+                "El MMR mínimo debe ser menor o igual al MMR máximo",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -285,32 +352,50 @@ public class DashboardPanel extends JPanel {
         
         // Fecha de inicio: en 1 hora
         LocalDateTime fechaInicio = LocalDateTime.now().plusHours(1);
+        System.out.println("  Fecha inicio: " + fechaInicio);
         
-        Scrim scrim = controller.handleCrearScrim(
-            juego,
-            formato,
-            region,
-            mmrMin,
-            mmrMax,
-            latenciaMax,
-            fechaInicio,
-            duracion
-        );
-        
-        if (scrim != null) {
+        try {
+            System.out.println("[DEBUG] Llamando a controller.handleCrearScrim...");
+            Scrim scrim = controller.handleCrearScrim(
+                juego,
+                formato,
+                region,
+                estrategiaSeleccionada,
+                mmrMin,
+                mmrMax,
+                latenciaMax,
+                fechaInicio,
+                duracion
+            );
+            
+            System.out.println("[DEBUG] Scrim creado: " + (scrim != null ? scrim.getId() : "NULL"));
+            
+            if (scrim != null) {
+                JOptionPane.showMessageDialog(this,
+                    "Scrim creado exitosamente con ID: " + scrim.getId(),
+                    "Éxito",
+                    JOptionPane.INFORMATION_MESSAGE);
+                loadScrims(); // Refrescar la tabla de scrims
+            } else {
+                System.err.println("[ERROR] El scrim retornado es NULL");
+                JOptionPane.showMessageDialog(this,
+                    "Error al crear el scrim. Verifique los datos ingresados.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] Excepción al crear scrim: " + e.getMessage());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Scrim creado exitosamente con ID: " + scrim.getId(),
-                "Ã‰xito",
-                JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this,
-                "Error al crear el scrim",
+                "Error al crear el scrim: " + e.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
     
     private void handlePostularse() {
+        System.out.println("[DEBUG] handlePostularse - Iniciando postulación a scrim");
+        
         int selectedRow = scrimsTable.getSelectedRow();
         if (selectedRow < 0) {
             JOptionPane.showMessageDialog(this,
@@ -321,8 +406,9 @@ public class DashboardPanel extends JPanel {
         }
         
         UUID scrimId = UUID.fromString((String) scrimsTableModel.getValueAt(selectedRow, 0));
+        System.out.println("[DEBUG] Scrim seleccionado: " + scrimId);
         
-        // Mostrar diÃ¡logo para seleccionar rol
+        // Mostrar diálogo para seleccionar rol
         Rol[] roles = Rol.values();
         Rol selectedRol = (Rol) JOptionPane.showInputDialog(
             this,
@@ -335,20 +421,32 @@ public class DashboardPanel extends JPanel {
         );
         
         if (selectedRol == null) {
-            return; // CancelÃ³
+            System.out.println("[DEBUG] Postulación cancelada por el usuario");
+            return; // Canceló
         }
+        
+        System.out.println("[DEBUG] Rol seleccionado: " + selectedRol);
+        System.out.println("[DEBUG] Llamando a controller.handlePostularse...");
         
         Postulacion postulacion = controller.handlePostularse(scrimId, selectedRol);
         
+        System.out.println("[DEBUG] Postulación resultado: " + (postulacion != null ? "EXITOSA" : "NULL"));
+        
         if (postulacion != null) {
+            System.out.println("[POSTULACION] Usuario '" + model.getUsuarioActual().getUsername() + 
+                             "' se postuló al scrim " + scrimId + " como " + selectedRol);
             JOptionPane.showMessageDialog(this,
-                "PostulaciÃ³n enviada exitosamente",
-                "Ã‰xito",
+                "¡Postulación enviada exitosamente!\n" +
+                "Scrim: " + scrimId + "\n" +
+                "Rol: " + selectedRol,
+                "Éxito",
                 JOptionPane.INFORMATION_MESSAGE);
             loadScrims(); // Refrescar tabla
+            loadPostulaciones(); // Refrescar mis postulaciones
         } else {
+            System.err.println("[ERROR] No se pudo crear la postulación");
             JOptionPane.showMessageDialog(this,
-                "Error al postularse. Verifique que no estÃ© ya postulado.",
+                "Error al postularse. Verifique que no esté ya postulado.",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
@@ -374,7 +472,7 @@ public class DashboardPanel extends JPanel {
         
         if (scrim == null) {
             JOptionPane.showMessageDialog(this,
-                "No se encontrÃ³ el scrim",
+                "No se encontró el scrim",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -384,14 +482,13 @@ public class DashboardPanel extends JPanel {
         details.append("ID: ").append(scrim.getId()).append("\n");
         details.append("Juego: ").append(scrim.getJuego()).append("\n");
         details.append("Formato: ").append(scrim.getFormato()).append("\n");
-        details.append("RegiÃ³n: ").append(scrim.getRegion()).append("\n");
-        details.append("Estado: ").append(scrim.getEstado()).append("\n");
+        details.append("Región: ").append(scrim.getRegion()).append("\n");
+        details.append("Estado: ").append(scrim.getEstado().getNombre()).append("\n");
+        int cupoTotal = scrim.getFormato().getJugadoresPorEquipo() * 2;
         details.append("Capacidad: ").append(scrim.getParticipantes().size())
-            .append("/").append(scrim.getCupoTotal()).append("\n");
-        details.append("DuraciÃ³n: ").append(scrim.getDuracionMin()).append(" min\n");
-        details.append("Rango MMR: ").append(scrim.getRangoMin())
-            .append(" - ").append(scrim.getRangoMax()).append("\n");
-        details.append("Latencia mÃ¡x: ").append(scrim.getLatenciaMax()).append(" ms\n");
+            .append("/").append(cupoTotal).append("\n");
+        details.append("Rango MMR: ").append(scrim.getMmrMinimo())
+            .append(" - ").append(scrim.getMmrMaximo()).append("\n");
         details.append("Fecha: ").append(scrim.getFechaHora()
             .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))).append("\n");
         
@@ -414,13 +511,14 @@ public class DashboardPanel extends JPanel {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM HH:mm");
         
         for (Scrim scrim : scrims) {
+            int cupoTotal = scrim.getFormato().getJugadoresPorEquipo() * 2;
             scrimsTableModel.addRow(new Object[]{
                 scrim.getId().toString(),
                 scrim.getJuego().toString(),
                 scrim.getFormato().toString(),
                 scrim.getRegion(),
-                scrim.getEstado(),
-                scrim.getParticipantes().size() + "/" + scrim.getCupoTotal(),
+                scrim.getEstado().getNombre(),
+                scrim.getParticipantes().size() + "/" + cupoTotal,
                 scrim.getFechaHora().format(formatter)
             });
         }
@@ -433,15 +531,15 @@ public class DashboardPanel extends JPanel {
             return;
         }
         
-        UUID usuarioId = model.getUsuarioActual().getId();
-        List<Postulacion> postulaciones = controller.handleObtenerPostulaciones(usuarioId);
+        List<Postulacion> postulaciones = controller.handleObtenerMisPostulaciones();
         
         for (Postulacion p : postulaciones) {
+            String estado = p.isAceptada() ? "Aceptada" : "Pendiente";
             postulacionesTableModel.addRow(new Object[]{
-                p.getScrimId().toString(),
-                p.getEstado(),
-                p.getRolDeseado(),
-                "N/A" // Fecha no disponible en modelo
+                p.getScrim().getId().toString(),
+                estado,
+                p.getRolSolicitado(),
+                p.getFechaPostulacion().toString()
             });
         }
     }
@@ -450,9 +548,9 @@ public class DashboardPanel extends JPanel {
         Map<String, Integer> stats = controller.handleObtenerEstadisticas();
         
         StringBuilder sb = new StringBuilder();
-        sb.append("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n");
+        sb.append("•••••••••••••••••••••••••••••••••••••••••••\n");
         sb.append("    ESTADÃSTICAS DEL SISTEMA eScrims\n");
-        sb.append("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n\n");
+        sb.append("•••••••••••••••••••••••••••••••••••••••••••\n\n");
         
         sb.append("USUARIOS\n");
         sb.append("  Total de usuarios: ").append(stats.get("totalUsuarios")).append("\n\n");
@@ -469,8 +567,11 @@ public class DashboardPanel extends JPanel {
         sb.append("  Aprobadas: ").append(stats.get("postulacionesAprobadas")).append("\n");
         sb.append("  Rechazadas: ").append(stats.get("postulacionesRechazadas")).append("\n\n");
         
-        sb.append("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n");
+        sb.append("•••••••••••••••••••••••••••••••••••••••••••\n");
         
         statsArea.setText(sb.toString());
     }
 }
+
+
+

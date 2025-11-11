@@ -16,12 +16,7 @@ public class SimpleMessage implements Message {
     }
     
     @Override
-    public String getContent() {
-        return content;
-    }
-    
-    @Override
-    public String getSubject() {
-        return subject;
+    public String getContenido() {
+        return "[" + subject + "] " + content;
     }
 }

@@ -16,8 +16,8 @@ public class TimestampedMessageDecorator extends MessageDecorator {
     }
     
     @Override
-    public String getContent() {
+    public String getContenido() {
         String timestamp = LocalDateTime.now().format(FORMATTER);
-        return "[" + timestamp + "] " + super.getContent();
+        return "[" + timestamp + "] " + super.getContenido();
     }
 }

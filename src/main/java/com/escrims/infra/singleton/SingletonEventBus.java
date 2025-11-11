@@ -46,30 +46,31 @@ public class SingletonEventBus implements DomainEventBus {
     private final Map<Class<? extends DomainEvent>, List<DomainEventSubscriber<? extends DomainEvent>>> subscribers = new ConcurrentHashMap<>();
     
     @Override
-    public void publish(DomainEvent event) {
-        List<DomainEventSubscriber<? extends DomainEvent>> subs = subscribers.get(event.getClass());
+    public <T extends DomainEvent> void publicar(T evento) {
+        List<DomainEventSubscriber<? extends DomainEvent>> subs = subscribers.get(evento.getClass());
         if (subs == null) return;
         
         for (DomainEventSubscriber<? extends DomainEvent> s : subs) {
             try {
                 @SuppressWarnings("unchecked")
-                DomainEventSubscriber<DomainEvent> subscriber = (DomainEventSubscriber<DomainEvent>) s;
-                subscriber.handle(event);
+                DomainEventSubscriber<T> subscriber = (DomainEventSubscriber<T>) s;
+                subscriber.manejar(evento);
             } catch (Exception ex) {
-                System.err.println("Failed to handle event " + event.getType() + ": " + ex.getMessage());
+                System.err.println("Failed to handle event " + evento.getTipo() + ": " + ex.getMessage());
             }
         }
     }
     
     @Override
-    public <E extends DomainEvent> void registerSubscriber(Class<E> eventType, DomainEventSubscriber<E> subscriber) {
-        subscribers.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(subscriber);
+    public <T extends DomainEvent> void suscribir(DomainEventSubscriber<T> suscriptor) {
+        Class<T> eventType = suscriptor.getTipoEvento();
+        subscribers.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(suscriptor);
     }
     
-    @Override
-    public <E extends DomainEvent> void unregisterSubscriber(Class<E> eventType, DomainEventSubscriber<E> subscriber) {
+    public <T extends DomainEvent> void desuscribir(DomainEventSubscriber<T> suscriptor) {
+        Class<T> eventType = suscriptor.getTipoEvento();
         List<DomainEventSubscriber<? extends DomainEvent>> list = subscribers.get(eventType);
-        if (list != null) list.remove(subscriber);
+        if (list != null) list.remove(suscriptor);
     }
     
     /**

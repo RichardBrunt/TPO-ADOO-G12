@@ -14,12 +14,7 @@ public abstract class MessageDecorator implements Message {
     }
     
     @Override
-    public String getContent() {
-        return wrappedMessage.getContent();
-    }
-    
-    @Override
-    public String getSubject() {
-        return wrappedMessage.getSubject();
+    public String getContenido() {
+        return wrappedMessage.getContenido();
     }
 }

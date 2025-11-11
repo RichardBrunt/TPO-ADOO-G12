@@ -15,7 +15,7 @@ public class CommandInvoker {
      * Ejecuta un comando y lo guarda en el historial.
      */
     public void executeCommand(Command command) {
-        command.execute();
+        command.ejecutar();
         commandHistory.push(command);
     }
     
@@ -25,7 +25,7 @@ public class CommandInvoker {
     public void undoLastCommand() {
         if (!commandHistory.isEmpty()) {
             Command lastCommand = commandHistory.pop();
-            lastCommand.undo();
+            lastCommand.deshacer();
         } else {
             System.out.println(">> No hay comandos para deshacer");
         }
@@ -40,7 +40,7 @@ public class CommandInvoker {
             System.out.println("   (vacio)");
         } else {
             for (int i = 0; i < commandHistory.size(); i++) {
-                System.out.println("   " + (i + 1) + ". " + commandHistory.get(i).getDescription());
+                System.out.println("   " + (i + 1) + ". Comando #" + (i + 1));
             }
         }
     }

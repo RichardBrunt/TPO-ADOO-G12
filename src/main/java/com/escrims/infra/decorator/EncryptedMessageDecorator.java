@@ -12,28 +12,13 @@ public class EncryptedMessageDecorator extends MessageDecorator {
     }
     
     @Override
-    public String getContent() {
-        String originalContent = super.getContent();
+    public String getContenido() {
+        String originalContent = super.getContenido();
         return encrypt(originalContent);
     }
     
-    @Override
-    public String getSubject() {
-        String originalSubject = super.getSubject();
-        return "[ENCRYPTED] " + originalSubject;
-    }
-    
     private String encrypt(String text) {
-        // Simulacion: simple ROT13 para demo
-        StringBuilder encrypted = new StringBuilder();
-        for (char c : text.toCharArray()) {
-            if (Character.isLetter(c)) {
-                char base = Character.isUpperCase(c) ? 'A' : 'a';
-                encrypted.append((char) ((c - base + 13) % 26 + base));
-            } else {
-                encrypted.append(c);
-            }
-        }
-        return encrypted.toString();
+        // Simulación simple de encriptación (reverse string)
+        return new StringBuilder(text).reverse().toString();
     }
 }

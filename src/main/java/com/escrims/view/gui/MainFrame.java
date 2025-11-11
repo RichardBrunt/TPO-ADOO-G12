@@ -115,20 +115,12 @@ public class MainFrame extends JFrame implements ModelChangeListener {
             // Inicializar servicios
             var scrimService = new ScrimService(
                 scrimRepo,
-                usuarioRepo,
-                postulacionRepo,
-                eventBus,
-                selectionStrategy
-            );
-            
-            // Crear modelo de aplicación (MVC - Model)
-            ApplicationModel model = new ApplicationModel(
-                scrimService,
-                usuarioRepo,
-                scrimRepo,
                 postulacionRepo,
                 eventBus
             );
+            
+            // Crear modelo de aplicación (MVC - Model)
+            ApplicationModel model = new ApplicationModel(scrimService);
             
             // Crear controlador (MVC - Controller)
             ScrimController controller = new ScrimController(model);
