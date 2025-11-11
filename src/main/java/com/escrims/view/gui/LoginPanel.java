@@ -15,8 +15,6 @@ import java.util.Set;
 public class LoginPanel extends JPanel {
     
     private final ScrimController controller;
-    private final MainFrame mainFrame;
-    
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
@@ -24,7 +22,6 @@ public class LoginPanel extends JPanel {
     
     public LoginPanel(ScrimController controller, MainFrame mainFrame) {
         this.controller = controller;
-        this.mainFrame = mainFrame;
         initUI();
     }
     
@@ -40,7 +37,7 @@ public class LoginPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
         // Título
-        JLabel titleLabel = new JLabel("eScrims - Sistema de Gestión de Scrims");
+        JLabel titleLabel = new JLabel("eScrims - Sistema de Gestion de Scrims");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0;
@@ -131,7 +128,7 @@ public class LoginPanel extends JPanel {
             // El cambio de pantalla se maneja automáticamente por el listener
         } else {
             JOptionPane.showMessageDialog(this,
-                "Usuario o contraseÃ±a incorrectos",
+                "Usuario o contraseña incorrectos",
                 "Error de Login",
                 JOptionPane.ERROR_MESSAGE);
         }

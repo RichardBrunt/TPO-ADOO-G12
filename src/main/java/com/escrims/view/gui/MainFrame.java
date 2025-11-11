@@ -16,9 +16,9 @@ import com.escrims.infra.notification.SMSNotificationService;
 import javax.swing.*;
 
 /**
- * Ventana principal de la aplicaciÃ³n (PatrÃ³n MVC - View)
+ * Ventana principal de la aplicacion (Patron MVC - View)
  * 
- * Contiene las diferentes pantallas de la aplicaciÃ³n.
+ * Contiene las diferentes pantallas de la aplicacion.
  */
 public class MainFrame extends JFrame implements ModelChangeListener {
     
@@ -41,7 +41,7 @@ public class MainFrame extends JFrame implements ModelChangeListener {
     }
     
     private void initUI() {
-        setTitle("eScrims - Sistema de GestiÃ³n de Scrims");
+        setTitle("eScrims - Sistema de Gestion de Scrims");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
