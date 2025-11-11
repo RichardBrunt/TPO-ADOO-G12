@@ -8,7 +8,10 @@ import com.escrims.infra.persistence.inmemory.InMemoryScrimRepository;
 import com.escrims.infra.persistence.inmemory.InMemoryUsuarioRepository;
 import com.escrims.infra.persistence.inmemory.InMemoryPostulacionRepository;
 import com.escrims.infra.singleton.SingletonEventBus;
-import com.escrims.model.domain.strategy.ByMMRStrategy;
+import com.escrims.infra.notification.NotificationFacade;
+import com.escrims.infra.notification.EmailNotificationService;
+import com.escrims.infra.notification.PushNotificationService;
+import com.escrims.infra.notification.SMSNotificationService;
 
 import javax.swing.*;
 
@@ -109,8 +112,13 @@ public class MainFrame extends JFrame implements ModelChangeListener {
             // Inicializar EventBus (Patrón SINGLETON + OBSERVER)
             var eventBus = SingletonEventBus.getInstance();
             
-            // Inicializar estrategia de selección (Patrón STRATEGY)
-            var selectionStrategy = new ByMMRStrategy();
+            // Inicializar NotificationFacade (Patrón FACADE)
+            NotificationFacade notificationFacade = new NotificationFacade();
+            notificationFacade.registrarServicio(new EmailNotificationService());
+            notificationFacade.registrarServicio(new PushNotificationService());
+            notificationFacade.registrarServicio(new SMSNotificationService());
+            System.out.println("[FACADE] Notification Facade inicializado con " + 
+                notificationFacade.getCantidadCanales() + " canales");
             
             // Inicializar servicios
             var scrimService = new ScrimService(
@@ -120,7 +128,7 @@ public class MainFrame extends JFrame implements ModelChangeListener {
             );
             
             // Crear modelo de aplicación (MVC - Model)
-            ApplicationModel model = new ApplicationModel(scrimService);
+            ApplicationModel model = new ApplicationModel(scrimService, usuarioRepo, notificationFacade);
             
             // Crear controlador (MVC - Controller)
             ScrimController controller = new ScrimController(model);

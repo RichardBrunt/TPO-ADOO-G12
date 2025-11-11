@@ -11,6 +11,7 @@ public class Postulacion {
     private String mensaje;
     private LocalDateTime fechaPostulacion;
     private boolean aceptada;
+    private boolean rechazada;
 
     public Postulacion(Usuario usuario, Scrim scrim, Rol rolSolicitado, String mensaje) {
         this.usuario = usuario;
@@ -19,6 +20,7 @@ public class Postulacion {
         this.mensaje = mensaje;
         this.fechaPostulacion = LocalDateTime.now();
         this.aceptada = false;
+        this.rechazada = false;
     }
 
     public Long getId() {
@@ -77,6 +79,14 @@ public class Postulacion {
         this.aceptada = true;
     }
 
+    public boolean isRechazada() {
+        return rechazada;
+    }
+
+    public void rechazar() {
+        this.rechazada = true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -96,6 +106,7 @@ public class Postulacion {
                 "usuario=" + usuario.getUsername() +
                 ", rol=" + rolSolicitado +
                 ", aceptada=" + aceptada +
+                ", rechazada=" + rechazada +
                 '}';
     }
 }

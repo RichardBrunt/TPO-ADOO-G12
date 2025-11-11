@@ -166,7 +166,7 @@ public class ScrimController {
         try {
             model.aceptarPostulacion(postulacionId);
         } catch (Exception e) {
-            System.err.println("Error al aceptar postulaciÃƒÂ³n: " + e.getMessage());
+            System.err.println("Error al aceptar postulacion: " + e.getMessage());
         }
     }
     
@@ -174,12 +174,46 @@ public class ScrimController {
         try {
             model.rechazarPostulacion(postulacionId);
         } catch (Exception e) {
-            System.err.println("Error al rechazar postulaciÃƒÂ³n: " + e.getMessage());
+            System.err.println("Error al rechazar postulacion: " + e.getMessage());
         }
     }
     
     // ============================================================
-    // INFORMACIÃƒâ€œN DEL SISTEMA
+    // CAMBIO DE ESTADO (PATRÓN STATE)
+    // ============================================================
+    
+    public void handleArmarLobby(UUID scrimId) {
+        try {
+            model.armarLobbyScrim(scrimId);
+            System.out.println("[CONTROLLER] Lobby armado para scrim: " + scrimId);
+        } catch (Exception e) {
+            System.err.println("[CONTROLLER] Error al armar lobby: " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    public void handleIniciarScrim(UUID scrimId) {
+        try {
+            model.iniciarScrim(scrimId);
+            System.out.println("[CONTROLLER] Scrim iniciado: " + scrimId);
+        } catch (Exception e) {
+            System.err.println("[CONTROLLER] Error al iniciar scrim: " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    public void handleFinalizarScrim(UUID scrimId) {
+        try {
+            model.finalizarScrim(scrimId);
+            System.out.println("[CONTROLLER] Scrim finalizado: " + scrimId);
+        } catch (Exception e) {
+            System.err.println("[CONTROLLER] Error al finalizar scrim: " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    // ============================================================
+    // INFORMACIÓN DEL SISTEMA
     // ============================================================
     
     public Map<String, Integer> handleObtenerEstadisticas() {

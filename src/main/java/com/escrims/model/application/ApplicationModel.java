@@ -1,7 +1,11 @@
 package com.escrims.model.application;
 
 import com.escrims.model.domain.model.*;
+import com.escrims.model.domain.state.*;
+import com.escrims.model.repository.UsuarioRepository;
 import com.escrims.model.service.ScrimService;
+import com.escrims.infra.notification.NotificationFacade;
+import com.escrims.infra.notification.TipoNotificacion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +14,14 @@ public class ApplicationModel {
     private Usuario usuarioActual;
     private Scrim scrimSeleccionado;
     private final ScrimService scrimService;
+    private final UsuarioRepository usuarioRepository;
+    private final NotificationFacade notificationFacade;
     private final List<ModelChangeListener> listeners;
 
-    public ApplicationModel(ScrimService scrimService) {
+    public ApplicationModel(ScrimService scrimService, UsuarioRepository usuarioRepository, NotificationFacade notificationFacade) {
         this.scrimService = scrimService;
+        this.usuarioRepository = usuarioRepository;
+        this.notificationFacade = notificationFacade;
         this.listeners = new ArrayList<>();
     }
 
@@ -136,23 +144,67 @@ public class ApplicationModel {
     public Postulacion postularseAScrim(java.util.UUID scrimId, Rol rolDeseado) {
         // Buscar scrim por ID - necesitamos convertir UUID a Long o buscar de otra forma
         List<Scrim> scrims = scrimService.listarTodosScrims();
+        
+        // Extraer el número del UUID (puede venir como "2" o como "00000000-0000-0000-0000-000000000002")
+        String scrimIdStr = scrimId.toString();
+        // Si es un UUID formateado, extraer solo el número
+        if (scrimIdStr.contains("-")) {
+            // Extraer la última parte después del último guión
+            String[] parts = scrimIdStr.split("-");
+            scrimIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalScrimIdStr = scrimIdStr;
+        System.out.println("[MODEL] Buscando scrim con ID: " + finalScrimIdStr);
+        
         Scrim scrim = scrims.stream()
-            .filter(s -> s.getId() != null && s.getId().toString().equals(scrimId.toString()))
+            .filter(s -> s.getId() != null && s.getId().toString().equals(finalScrimIdStr))
             .findFirst()
             .orElse(null);
             
         if (scrim != null) {
+            System.out.println("[MODEL] Scrim encontrado: " + scrim.getId());
             Postulacion postulacion = scrimService.postularseAScrim(scrim, usuarioActual, rolDeseado, "");
+            
+            // PATRÓN FACADE: Notificar al creador del scrim sobre la nueva postulación
+            if (scrim.getCreador() != null) {
+                String nombreScrim = scrim.getJuego().getNombre() + " - " + scrim.getFormato().getDescripcion();
+                String mensaje = String.format(
+                    "¡Hola %s! El usuario '%s' se ha postulado a tu scrim '%s' para el rol de %s.\n" +
+                    "Ingresa a 'Gestionar Postulaciones' para revisar.",
+                    scrim.getCreador().getUsername(),
+                    usuarioActual.getUsername(),
+                    nombreScrim,
+                    rolDeseado.name()
+                );
+                
+                notificationFacade.enviarNotificacion(
+                    scrim.getCreador(),
+                    mensaje,
+                    TipoNotificacion.EMAIL
+                );
+            }
+            
             notifyListeners();
             return postulacion;
         }
+        System.err.println("[MODEL] No se encontró scrim con ID: " + finalScrimIdStr);
         return null;
     }
 
     public List<Postulacion> obtenerPostulacionesDeScrim(java.util.UUID scrimId) {
         List<Scrim> scrims = scrimService.listarTodosScrims();
+        
+        // Extraer el número del UUID
+        String scrimIdStr = scrimId.toString();
+        if (scrimIdStr.contains("-")) {
+            String[] parts = scrimIdStr.split("-");
+            scrimIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalScrimIdStr = scrimIdStr;
         Scrim scrim = scrims.stream()
-            .filter(s -> s.getId() != null && s.getId().toString().equals(scrimId.toString()))
+            .filter(s -> s.getId() != null && s.getId().toString().equals(finalScrimIdStr))
             .findFirst()
             .orElse(null);
             
@@ -179,35 +231,190 @@ public class ApplicationModel {
     }
 
     public void aceptarPostulacion(java.util.UUID postulacionId) {
+        // Extraer el número del UUID
+        String postulacionIdStr = postulacionId.toString();
+        if (postulacionIdStr.contains("-")) {
+            String[] parts = postulacionIdStr.split("-");
+            postulacionIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalPostulacionIdStr = postulacionIdStr;
+        System.out.println("[MODEL] Buscando postulación con ID: " + finalPostulacionIdStr);
+        
         // Buscar la postulación en todos los scrims
         for (Scrim scrim : scrimService.listarTodosScrims()) {
             for (Postulacion p : scrim.getPostulaciones()) {
-                if (p.getId() != null && p.getId().toString().equals(postulacionId.toString())) {
+                if (p.getId() != null && p.getId().toString().equals(finalPostulacionIdStr)) {
+                    System.out.println("[MODEL] Postulación encontrada, aceptando...");
                     scrimService.aceptarPostulacion(p);
+                    
+                    // PATRÓN FACADE: Notificar al usuario que su postulación fue aceptada
+                    String nombreScrim = scrim.getJuego().getNombre() + " - " + scrim.getFormato().getDescripcion();
+                    String mensaje = String.format(
+                        "¡Felicidades %s! Tu postulación al scrim '%s' para el rol de %s ha sido ACEPTADA.\n" +
+                        "Ya formas parte del equipo. ¡Prepárate para el scrim!",
+                        p.getUsuario().getUsername(),
+                        nombreScrim,
+                        p.getRolSolicitado().name()
+                    );
+                    
+                    notificationFacade.enviarNotificacion(
+                        p.getUsuario(),
+                        mensaje,
+                        TipoNotificacion.EMAIL_PUSH
+                    );
+                    
                     notifyListeners();
                     return;
                 }
             }
         }
+        System.err.println("[MODEL] No se encontró postulación con ID: " + finalPostulacionIdStr);
     }
 
     public void rechazarPostulacion(java.util.UUID postulacionId) {
-        // Buscar la postulación en todos los scrims y eliminarla
+        // Extraer el número del UUID
+        String postulacionIdStr = postulacionId.toString();
+        if (postulacionIdStr.contains("-")) {
+            String[] parts = postulacionIdStr.split("-");
+            postulacionIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalPostulacionIdStr = postulacionIdStr;
+        System.out.println("[MODEL] Buscando postulación para rechazar con ID: " + finalPostulacionIdStr);
+        
+        // Buscar la postulación en todos los scrims y marcarla como rechazada
         for (Scrim scrim : scrimService.listarTodosScrims()) {
             for (Postulacion p : scrim.getPostulaciones()) {
-                if (p.getId() != null && p.getId().toString().equals(postulacionId.toString())) {
-                    scrim.getPostulaciones().remove(p);
+                if (p.getId() != null && p.getId().toString().equals(finalPostulacionIdStr)) {
+                    System.out.println("[MODEL] Postulación encontrada, marcando como rechazada...");
+                    p.rechazar();
+                    
+                    // PATRÓN FACADE: Notificar al usuario que su postulación fue rechazada
+                    String nombreScrim = scrim.getJuego().getNombre() + " - " + scrim.getFormato().getDescripcion();
+                    String mensaje = String.format(
+                        "Hola %s, lamentablemente tu postulación al scrim '%s' para el rol de %s no fue aceptada.\n" +
+                        "No te desanimes, hay muchos otros scrims disponibles.",
+                        p.getUsuario().getUsername(),
+                        nombreScrim,
+                        p.getRolSolicitado().name()
+                    );
+                    
+                    notificationFacade.enviarNotificacion(
+                        p.getUsuario(),
+                        mensaje,
+                        TipoNotificacion.EMAIL
+                    );
+                    
                     notifyListeners();
+                    System.out.println("[MODEL] Postulación rechazada exitosamente en scrim " + scrim.getId());
                     return;
                 }
             }
+        }
+        System.err.println("[MODEL] No se encontró postulación con ID: " + finalPostulacionIdStr);
+    }
+
+    // Métodos para cambiar estado del Scrim (Patrón STATE)
+    public void armarLobbyScrim(java.util.UUID scrimId) {
+        String scrimIdStr = scrimId.toString();
+        if (scrimIdStr.contains("-")) {
+            String[] parts = scrimIdStr.split("-");
+            scrimIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalScrimIdStr = scrimIdStr;
+        Scrim scrim = scrimService.listarTodosScrims().stream()
+            .filter(s -> s.getId().toString().equals(finalScrimIdStr))
+            .findFirst()
+            .orElse(null);
+        
+        if (scrim != null) {
+            scrimService.armarLobby(scrim);
+            notifyListeners();
+            System.out.println("[STATE] Scrim " + scrim.getId() + " cambió a estado: Lobby Armado");
+        }
+    }
+
+    public void iniciarScrim(java.util.UUID scrimId) {
+        String scrimIdStr = scrimId.toString();
+        if (scrimIdStr.contains("-")) {
+            String[] parts = scrimIdStr.split("-");
+            scrimIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalScrimIdStr = scrimIdStr;
+        Scrim scrim = scrimService.listarTodosScrims().stream()
+            .filter(s -> s.getId().toString().equals(finalScrimIdStr))
+            .findFirst()
+            .orElse(null);
+        
+        if (scrim != null) {
+            scrimService.iniciarScrim(scrim);
+            notifyListeners();
+            System.out.println("[STATE] Scrim " + scrim.getId() + " cambió a estado: En Curso");
+        }
+    }
+
+    public void finalizarScrim(java.util.UUID scrimId) {
+        String scrimIdStr = scrimId.toString();
+        if (scrimIdStr.contains("-")) {
+            String[] parts = scrimIdStr.split("-");
+            scrimIdStr = String.valueOf(Long.parseLong(parts[parts.length - 1]));
+        }
+        
+        final String finalScrimIdStr = scrimIdStr;
+        Scrim scrim = scrimService.listarTodosScrims().stream()
+            .filter(s -> s.getId().toString().equals(finalScrimIdStr))
+            .findFirst()
+            .orElse(null);
+        
+        if (scrim != null) {
+            scrimService.finalizarScrim(scrim);
+            notifyListeners();
+            System.out.println("[STATE] Scrim " + scrim.getId() + " cambió a estado: Finalizado");
         }
     }
 
     public java.util.Map<String, Integer> obtenerEstadisticas() {
         java.util.Map<String, Integer> stats = new java.util.HashMap<>();
-        stats.put("totalScrims", scrimService.listarTodosScrims().size());
-        stats.put("scrimsDisponibles", scrimService.listarScrimsDisponibles().size());
+        
+        // Estadísticas de scrims
+        List<Scrim> todosScrims = scrimService.listarTodosScrims();
+        stats.put("totalScrims", todosScrims.size());
+        stats.put("scrimsAbiertos", (int) todosScrims.stream().filter(s -> s.getEstado() instanceof BuscandoState).count());
+        stats.put("scrimsEnCurso", (int) todosScrims.stream().filter(s -> s.getEstado() instanceof EnCursoState).count());
+        stats.put("scrimsFinalizados", (int) todosScrims.stream().filter(s -> s.getEstado() instanceof FinalizadoState).count());
+        
+        // Estadísticas de usuarios
+        stats.put("totalUsuarios", usuarioRepository.buscarTodos().size());
+        
+        // Estadísticas de postulaciones
+        int totalPostulaciones = 0;
+        int pendientes = 0;
+        int aprobadas = 0;
+        int rechazadas = 0;
+        
+        for (Scrim scrim : todosScrims) {
+            List<Postulacion> postulaciones = scrim.getPostulaciones();
+            totalPostulaciones += postulaciones.size();
+            
+            for (Postulacion p : postulaciones) {
+                if (p.isAceptada()) {
+                    aprobadas++;
+                } else if (p.isRechazada()) {
+                    rechazadas++;
+                } else {
+                    pendientes++;
+                }
+            }
+        }
+        
+        stats.put("totalPostulaciones", totalPostulaciones);
+        stats.put("postulacionesPendientes", pendientes);
+        stats.put("postulacionesAprobadas", aprobadas);
+        stats.put("postulacionesRechazadas", rechazadas);
+        
         return stats;
     }
 
